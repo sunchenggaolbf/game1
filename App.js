@@ -1,29 +1,60 @@
-import React, { useState } from 'react';
-import { View, Text, Button, StyleSheet } from 'react-native';
+
+import React, { useRef, useEffect, useState } from 'react';
+import { View, StyleSheet, Button } from 'react-native';
+import Matter from 'matter-js';
 
 const App = () => {
-  const [player1Health, setPlayer1Health] = useState(100);
-  const [player2Health, setPlayer2Health] = useState(100);
+  const physicsEngine = useRef(Matter.Engine.create());
+  const [ball, setBall] = useState(null);
 
-  const handleThrowStone = () => {
-    const damage = Math.floor(Math.random() * 20) + 1; // 随机造成1到20点伤害
-    const attacker = Math.random() < 0.5 ? 'Player 1' : 'Player 2'; // 随机选择攻击者
-    if (attacker === 'Player 1') {
-      setPlayer2Health(prevHealth => Math.max(0, prevHealth - damage));
-    } else {
-      setPlayer1Health(prevHealth => Math.max(0, prevHealth - damage));
-    }
+  useEffect(() => {
+    const engine = physicsEngine.current;
+    const world = engine.world;
+
+    const ground = Matter.Bodies.rectangle(200, 600, 400, 10, { isStatic: true });
+    const leftWall = Matter.Bodies.rectangle(0, 300, 10, 600, { isStatic: true });
+    const rightWall = Matter.Bodies.rectangle(400, 300, 10, 600, { isStatic: true });
+
+    Matter.World.add(world, [ground, leftWall, rightWall]);
+
+    Matter.Events.on(engine, 'afterUpdate', () => {
+      setBall(ball => {
+        if (ball) {
+          return {
+            ...ball,
+            position: ball.position,
+            angle: ball.angle,
+          };
+        }
+        return null;
+      });
+    });
+
+    Matter.Runner.run(engine);
+
+    return () => {
+      Matter.Events.off(engine, 'afterUpdate');
+      Matter.World.clear(world);
+      Matter.Engine.clear(engine);
+    };
+  }, []);
+
+  const handleThrowBall = () => {
+    const engine = physicsEngine.current;
+
+    const newBall = Matter.Bodies.circle(200, 100, 20);
+    Matter.World.add(engine.world, newBall);
+    Matter.Body.applyForce(newBall, { x: newBall.position.x, y: newBall.position.y }, { x: 0.01, y: -0.01 });
+
+    setBall(newBall);
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.playerContainer}>
-        <Text style={styles.playerText}>Player 1 Health: {player1Health}</Text>
-      </View>
-      <View style={styles.playerContainer}>
-        <Text style={styles.playerText}>Player 2 Health: {player2Health}</Text>
-      </View>
-      <Button title="Throw Stone" onPress={handleThrowStone} />
+      <Button title="Throw Ball" onPress={handleThrowBall} />
+      {ball && (
+        <View style={[styles.ball, { left: ball.position.x - 20, top: ball.position.y - 20 }]} />
+      )}
     </View>
   );
 };
@@ -31,14 +62,16 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  playerContainer: {
-    marginVertical: 10,
-  },
-  playerText: {
-    fontSize: 20,
+  ball: {
+    position: 'absolute',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'red',
   },
 });
 
