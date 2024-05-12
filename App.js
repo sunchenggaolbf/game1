@@ -18,12 +18,13 @@ const App = () => {
     Matter.World.add(world, [ground, leftWall, rightWall]);
 
     Matter.Events.on(engine, 'afterUpdate', () => {
+
+      //讲物理引擎得到的位置和角度保存到状态管理器中。这样可以稳定的被css找到。
+      //位置更新之后，会set值，在之后才渲染组件。这个时候已经保存状态了。
       setBall(ball => {
         if (ball) {
           return {
             ...ball,
-            position: ball.position,
-            angle: ball.angle,
           };
         }
         return null;
@@ -42,11 +43,19 @@ const App = () => {
   const handleThrowBall = () => {
     const engine = physicsEngine.current;
 
-    const newBall = Matter.Bodies.circle(200, 100, 20);
+    //在系统中移除旧的球
+    const ballToRemove = engine.world.bodies.find(body => body.label === 'ball1');
+    if(ballToRemove){
+        Matter.World.remove(engine.world, ballToRemove);
+    }
+
+    //添加新球并赋力
+    const newBall = Matter.Bodies.circle(200, 100, 20, { label: 'ball1' });
     Matter.World.add(engine.world, newBall);
     Matter.Body.applyForce(newBall, { x: newBall.position.x, y: newBall.position.y }, { x: 0.01, y: -0.01 });
 
     setBall(newBall);
+    
   };
 
   return (
