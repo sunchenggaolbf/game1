@@ -38,7 +38,7 @@ const App = () => {
         } else{
           setBallColor('red');
         }
-        // 这里可以添加更多的碰撞检测逻辑aaasunchenggao
+        // 这里可以添加更多的碰撞检测逻辑aaa
       });
     });
 
