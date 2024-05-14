@@ -16,7 +16,7 @@ const App = () => {
 
     Matter.World.add(world, [ground, leftWall, rightWall]);
 
-    // 不断更新小球位置状态监听666667777777
+    // 不断更新小球位置状态监听666667777777888888
     Matter.Events.on(engine, 'afterUpdate', () => {
       setBall(ball => {
         if (ball) {
